@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantum_entropy"
+version = "0.1.0"
+description = "Quantum Entropy Algorithms Library"
+authors = [
+    {name = "Zulkifl Khairoowala"}
+]
+requires-python = ">=3.10"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

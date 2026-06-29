@@ -1,260 +1,185 @@
 """
 ==========================================================================
-
 Quantum Entropy Algorithms Library
 
 Module:
     Density Operator
 
-Description
------------
-Core abstraction representing a quantum density operator.
+Commit:
+    2 - Validation Layer
 
-This module defines ONLY the public API.
-Numerical implementations will be added incrementally in later commits.
-
-Author
-------
-Zulkifl Khairoowala
-
+Author:
+    Zulkifl Khairoowala
 ==========================================================================
-
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from typing import Optional
-
 
 class DensityOperator:
-    """
-    Quantum Density Operator.
 
-    Parameters
-    ----------
-    matrix : numpy.ndarray
+    TOL = 1e-12
 
-        Density matrix.
-
-    Notes
-    -----
-
-    A valid density matrix satisfies
-
-        ρ = ρ†
-
-        Tr(ρ) = 1
-
-        ρ >= 0
-
-    """
-
-    ##################################################################
+    ####################################################################
     # Constructor
-    ##################################################################
+    ####################################################################
 
-    def __init__(self, matrix: np.ndarray):
+    def __init__(self, matrix):
 
-        self._matrix = np.asarray(matrix, dtype=np.complex128)
+        self._matrix = np.asarray(
+            matrix,
+            dtype=np.complex128
+        )
 
-    ##################################################################
+        if self._matrix.ndim != 2:
+            raise ValueError(
+                "Density matrix must be two-dimensional."
+            )
+
+        if self._matrix.shape[0] != self._matrix.shape[1]:
+            raise ValueError(
+                "Density matrix must be square."
+            )
+
+    ####################################################################
     # Properties
-    ##################################################################
+    ####################################################################
 
     @property
-    def matrix(self) -> np.ndarray:
-        """Return density matrix."""
+    def matrix(self):
 
         return self._matrix.copy()
 
     @property
-    def dimension(self) -> int:
-        """Dimension of Hilbert space."""
+    def dimension(self):
 
-        raise NotImplementedError
+        return self._matrix.shape[0]
 
     @property
     def shape(self):
-        """Matrix shape."""
 
-        raise NotImplementedError
+        return self._matrix.shape
 
-    ##################################################################
+    ####################################################################
     # Validation
-    ##################################################################
+    ####################################################################
 
-    def is_valid(self) -> bool:
-        """Check whether matrix is a valid density operator."""
+    def is_hermitian(self):
 
+        return np.allclose(
+            self._matrix,
+            self._matrix.conj().T,
+            atol=self.TOL
+        )
+
+    def has_unit_trace(self):
+
+        return np.isclose(
+            np.trace(self._matrix),
+            1.0,
+            atol=self.TOL
+        )
+
+    def is_positive(self):
+
+        if not self.is_hermitian():
+            return False
+
+        eigvals = np.linalg.eigvalsh(self._matrix)
+
+        return np.all(eigvals >= -self.TOL)
+
+    def is_valid(self):
+
+        return (
+
+            self.is_hermitian()
+
+            and
+
+            self.has_unit_trace()
+
+            and
+
+            self.is_positive()
+
+        )
+
+    ####################################################################
+    # Basic Linear Algebra
+    ####################################################################
+
+    def trace(self):
+
+        return np.trace(self._matrix).real
+
+    ####################################################################
+    # Placeholders
+    ####################################################################
+
+    def rank(self):
         raise NotImplementedError
 
-    def is_hermitian(self) -> bool:
-        """Check Hermiticity."""
-
+    def eigenvalues(self):
         raise NotImplementedError
 
-    def is_positive(self) -> bool:
-        """Check positive semidefinite property."""
-
-        raise NotImplementedError
-
-    def has_unit_trace(self) -> bool:
-        """Check trace normalization."""
-
-        raise NotImplementedError
-
-    ##################################################################
-    # Linear Algebra
-    ##################################################################
-
-    def trace(self) -> float:
-        """Matrix trace."""
-
-        raise NotImplementedError
-
-    def rank(self) -> int:
-        """Matrix rank."""
-
-        raise NotImplementedError
-
-    def eigenvalues(self) -> np.ndarray:
-        """Eigenvalues."""
-
-        raise NotImplementedError
-
-    def eigenvectors(self) -> np.ndarray:
-        """Eigenvectors."""
-
+    def eigenvectors(self):
         raise NotImplementedError
 
     def spectral_decomposition(self):
-        """Spectral decomposition."""
-
         raise NotImplementedError
 
-    ##################################################################
-    # Matrix Functions
-    ##################################################################
-
     def sqrt(self):
-        """Matrix square root."""
-
         raise NotImplementedError
 
     def log(self):
-        """Matrix logarithm."""
-
         raise NotImplementedError
 
     def inverse(self):
-        """Matrix inverse."""
-
         raise NotImplementedError
 
-    def power(self, alpha: float):
-        """Matrix power."""
-
+    def power(self, alpha):
         raise NotImplementedError
 
-    ##################################################################
-    # Quantum Information
-    ##################################################################
-
-    def purity(self) -> float:
-        """Purity."""
-
+    def purity(self):
         raise NotImplementedError
 
-    def entropy(self) -> float:
-        """Von Neumann entropy."""
-
+    def entropy(self):
         raise NotImplementedError
 
-    def linear_entropy(self) -> float:
-        """Linear entropy."""
-
+    def linear_entropy(self):
         raise NotImplementedError
 
-    ##################################################################
-    # Matrix Operations
-    ##################################################################
-
-    def tensor(self, other: "DensityOperator"):
-        """Tensor product."""
-
-        raise NotImplementedError
-
-    def partial_trace(self, subsystem):
-        """Partial trace."""
-
-        raise NotImplementedError
-
-    def transpose(self):
-        """Transpose."""
-
-        raise NotImplementedError
-
-    def conjugate(self):
-        """Complex conjugate."""
-
-        raise NotImplementedError
-
-    def adjoint(self):
-        """Hermitian adjoint."""
-
-        raise NotImplementedError
-
-    ##################################################################
-    # Metrics
-    ##################################################################
-
-    def fidelity(self, other: "DensityOperator"):
-        """Quantum fidelity."""
-
-        raise NotImplementedError
-
-    def trace_distance(self, other: "DensityOperator"):
-        """Quantum trace distance."""
-
-        raise NotImplementedError
-
-    ##################################################################
+    ####################################################################
     # Export
-    ##################################################################
+    ####################################################################
 
     def copy(self):
-        """Return deep copy."""
 
-        raise NotImplementedError
+        return DensityOperator(
+            self._matrix.copy()
+        )
 
     def numpy(self):
-        """Return NumPy array."""
 
-        raise NotImplementedError
+        return self.matrix
 
-    ##################################################################
-    # Visualization
-    ##################################################################
-
-    def plot_matrix(self):
-        """Visualize density matrix."""
-
-        raise NotImplementedError
-
-    def plot_eigenvalues(self):
-        """Visualize eigenvalues."""
-
-        raise NotImplementedError
-
-    ##################################################################
+    ####################################################################
     # Representation
-    ##################################################################
+    ####################################################################
 
     def __repr__(self):
 
+        status = "Valid" if self.is_valid() else "Invalid"
+
         return (
-            f"{self.__class__.__name__}"
-            f"(dimension={self._matrix.shape[0]})"
+
+            f"DensityOperator("
+
+            f"dimension={self.dimension}, "
+
+            f"{status})"
+
         )
