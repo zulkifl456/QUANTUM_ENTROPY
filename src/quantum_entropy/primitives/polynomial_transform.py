@@ -41,14 +41,13 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
-from quantum_entropy.primitives.polynomial import Polynomial
-
 import numpy as np
 
-from quantum_entropy.core.density_operator import DensityOperator
+from quantum_entropy.primitives.matrix_function import MatrixFunction
+from quantum_entropy.primitives.polynomial import Polynomial
 
 
-class PolynomialEigenvalueTransformation:
+class PolynomialEigenvalueTransformation(MatrixFunction):
     """
     Numerical Polynomial Eigenvalue Transformation.
     """
@@ -59,32 +58,25 @@ class PolynomialEigenvalueTransformation:
 
     def __init__(
         self,
-        density: DensityOperator,
+        density,
         polynomial,
     ):
 
-        if not isinstance(density, DensityOperator):
-            raise TypeError(
-                "density must be a DensityOperator."
-            )
+        super().__init__(density)
 
-        #
-        # Accept either Polynomial or callable
-        #
         if isinstance(polynomial, Polynomial):
+
             self._polynomial = polynomial
 
         elif callable(polynomial):
+
             self._polynomial = polynomial
 
         else:
+
             raise TypeError(
                 "Expected Polynomial or callable."
             )
-
-        self._density = density
-
-        self._result = None
 
     ####################################################################
     # Properties
@@ -107,47 +99,22 @@ class PolynomialEigenvalueTransformation:
     ####################################################################
 
     def apply(self):
-        """
-        Apply the polynomial to the eigenvalues while
-        preserving the eigenvectors.
-
-        Returns
-        -------
-        DensityOperator
-        """
 
         if self._result is not None:
             return self._result
 
-        #
-        # Spectral decomposition
-        #
-        spectral = self._density.spectral_decomposition()
+        spectral = self.spectral_decomposition()
 
-        eigenvalues = spectral.eigenvalues
-        eigenvectors = spectral.eigenvectors
-
-        #
-        # Apply polynomial
-        #
         transformed = np.array(
             [
-                self._polynomial(float(lam))
-                for lam in eigenvalues
-            ],
-            dtype=np.float64,
+                self._polynomial(x)
+                for x in spectral.eigenvalues
+            ]
         )
 
-        #
-        # Reconstruct matrix
-        #
-        matrix = (
-            eigenvectors
-            @ np.diag(transformed)
-            @ eigenvectors.conj().T
+        self._result = self.reconstruct(
+            transformed
         )
-
-        self._result = DensityOperator(matrix)
 
         return self._result
 
@@ -156,29 +123,23 @@ class PolynomialEigenvalueTransformation:
     ####################################################################
 
     def transformed_eigenvalues(self):
-        """
-        Return P(λᵢ).
-        """
 
-        spectral = self._density.spectral_decomposition()
+        spectral = self.spectral_decomposition()
 
         return np.array(
             [
-                self._polynomial(float(l))
-                for l in spectral.eigenvalues
+                self._polynomial(x)
+                for x in spectral.eigenvalues
             ]
         )
 
     def verify_hermitian(self):
-        """
-        Verify that the transformed operator is Hermitian.
-        """
 
-        matrix = self.apply().numpy()
+        A = self.apply().numpy()
 
         return np.allclose(
-            matrix,
-            matrix.conj().T,
+            A,
+            A.conj().T,
             atol=1e-12,
         )
 

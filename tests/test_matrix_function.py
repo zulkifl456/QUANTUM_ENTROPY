@@ -67,3 +67,23 @@ def test_numpy():
         f.numpy(),
         sample_density().numpy(),
     )
+
+from quantum_entropy.primitives.polynomial import Polynomial
+from quantum_entropy.primitives.polynomial_transform import (
+    PolynomialEigenvalueTransformation,
+)
+
+
+def test_polynomial_is_matrix_function():
+
+    poly = Polynomial([0, 0, 1])
+
+    pet = PolynomialEigenvalueTransformation(
+        sample_density(),
+        poly,
+    )
+
+    assert isinstance(
+        pet,
+        MatrixFunction,
+    )
