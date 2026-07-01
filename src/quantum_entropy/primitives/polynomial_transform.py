@@ -41,6 +41,8 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
+from quantum_entropy.primitives.polynomial import Polynomial
+
 import numpy as np
 
 from quantum_entropy.core.density_operator import DensityOperator
@@ -58,7 +60,7 @@ class PolynomialEigenvalueTransformation:
     def __init__(
         self,
         density: DensityOperator,
-        polynomial: Callable[[float], float],
+        polynomial,
     ):
 
         if not isinstance(density, DensityOperator):
@@ -66,15 +68,23 @@ class PolynomialEigenvalueTransformation:
                 "density must be a DensityOperator."
             )
 
-        if not callable(polynomial):
+        #
+        # Accept either Polynomial or callable
+        #
+        if isinstance(polynomial, Polynomial):
+            self._polynomial = polynomial
+
+        elif callable(polynomial):
+            self._polynomial = polynomial
+
+        else:
             raise TypeError(
-                "polynomial must be callable."
+                "Expected Polynomial or callable."
             )
 
         self._density = density
-        self._polynomial = polynomial
 
-        self._result: Optional[DensityOperator] = None
+        self._result = None
 
     ####################################################################
     # Properties
@@ -185,7 +195,17 @@ class PolynomialEigenvalueTransformation:
 
     def __repr__(self):
 
+        poly_name = (
+            "Polynomial"
+            if isinstance(
+                self._polynomial,
+                Polynomial,
+            )
+            else "Callable"
+        )
+
         return (
             "PolynomialEigenvalueTransformation("
-            f"dimension={self.dimension})"
+            f"dimension={self.dimension}, "
+            f"type={poly_name})"
         )

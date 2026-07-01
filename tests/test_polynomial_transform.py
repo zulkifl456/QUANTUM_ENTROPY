@@ -5,6 +5,9 @@ from quantum_entropy.primitives.polynomial_transform import (
     PolynomialEigenvalueTransformation,
 )
 
+from quantum_entropy.primitives.polynomial import Polynomial
+
+
 
 def sample_density():
 
@@ -100,3 +103,32 @@ def test_eigenvalues():
         pet.transformed_eigenvalues(),
         expected,
     )
+
+    from quantum_entropy.primitives.polynomial import Polynomial
+
+
+def test_polynomial_object():
+
+    poly = Polynomial([0, 0, 1])
+
+    pet = PolynomialEigenvalueTransformation(
+        sample_density(),
+        poly,
+    )
+
+    result = pet.apply()
+
+    expected = sample_density().power(2)
+
+    assert np.allclose(
+        result.numpy(),
+        expected,
+        atol=1e-12,
+    )
+
+
+def test_polynomial_degree():
+
+    poly = Polynomial([1, 2, 3])
+
+    assert poly.degree == 2
