@@ -82,17 +82,14 @@ class PolynomialEigenvalueTransformation:
 
     @property
     def density(self):
-
         return self._density
 
     @property
     def polynomial(self):
-
         return self._polynomial
 
     @property
     def dimension(self):
-
         return self._density.dimension
 
     ####################################################################
@@ -101,14 +98,48 @@ class PolynomialEigenvalueTransformation:
 
     def apply(self):
         """
-        Apply the polynomial eigenvalue transformation.
+        Apply the polynomial to the eigenvalues while
+        preserving the eigenvectors.
 
         Returns
         -------
         DensityOperator
         """
 
-        raise NotImplementedError
+        if self._result is not None:
+            return self._result
+
+        #
+        # Spectral decomposition
+        #
+        spectral = self._density.spectral_decomposition()
+
+        eigenvalues = spectral.eigenvalues
+        eigenvectors = spectral.eigenvectors
+
+        #
+        # Apply polynomial
+        #
+        transformed = np.array(
+            [
+                self._polynomial(float(lam))
+                for lam in eigenvalues
+            ],
+            dtype=np.float64,
+        )
+
+        #
+        # Reconstruct matrix
+        #
+        matrix = (
+            eigenvectors
+            @ np.diag(transformed)
+            @ eigenvectors.conj().T
+        )
+
+        self._result = DensityOperator(matrix)
+
+        return self._result
 
     ####################################################################
     # Verification
@@ -116,24 +147,36 @@ class PolynomialEigenvalueTransformation:
 
     def transformed_eigenvalues(self):
         """
-        Return transformed eigenvalues.
+        Return P(λᵢ).
         """
 
-        raise NotImplementedError
+        spectral = self._density.spectral_decomposition()
+
+        return np.array(
+            [
+                self._polynomial(float(l))
+                for l in spectral.eigenvalues
+            ]
+        )
 
     def verify_hermitian(self):
         """
-        Verify Hermiticity.
+        Verify that the transformed operator is Hermitian.
         """
 
-        raise NotImplementedError
+        matrix = self.apply().numpy()
+
+        return np.allclose(
+            matrix,
+            matrix.conj().T,
+            atol=1e-12,
+        )
 
     ####################################################################
     # Export
     ####################################################################
 
     def numpy(self):
-
         return self.apply().numpy()
 
     ####################################################################

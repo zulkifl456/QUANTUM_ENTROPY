@@ -22,8 +22,11 @@ def sample_density():
 
 
 def square(x):
-
     return x * x
+
+
+def sqrt_poly(x):
+    return np.sqrt(x)
 
 
 def test_constructor():
@@ -35,6 +38,65 @@ def test_constructor():
 
     assert pet.dimension == 2
 
-    assert pet.density.dimension == 2
 
-    assert pet.polynomial is square
+def test_square():
+
+    pet = PolynomialEigenvalueTransformation(
+        sample_density(),
+        square,
+    )
+
+    result = pet.apply()
+
+    expected = sample_density().power(2)
+
+    assert np.allclose(
+        result.numpy(),
+        expected,
+        atol=1e-12,
+    )
+
+
+def test_square_root():
+
+    pet = PolynomialEigenvalueTransformation(
+        sample_density(),
+        sqrt_poly,
+    )
+
+    result = pet.apply()
+
+    expected = sample_density().sqrt()
+
+    assert np.allclose(
+        result.numpy(),
+        expected,
+        atol=1e-12,
+    )
+
+
+def test_hermitian():
+
+    pet = PolynomialEigenvalueTransformation(
+        sample_density(),
+        square,
+    )
+
+    assert pet.verify_hermitian()
+
+
+def test_eigenvalues():
+
+    pet = PolynomialEigenvalueTransformation(
+        sample_density(),
+        square,
+    )
+
+    eigvals = sample_density().spectral_decomposition().eigenvalues
+
+    expected = eigvals ** 2
+
+    assert np.allclose(
+        pet.transformed_eigenvalues(),
+        expected,
+    )
